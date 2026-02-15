@@ -3,78 +3,161 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>حِمى درع — منصة قياس الجاهزية التنظيمية</title>
+  <title>حِمى — منصة قياس الجاهزية التنظيمية</title>
+
+  <!-- IBM Plex Arabic -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;600;700&display=swap" rel="stylesheet">
+
   <link rel="stylesheet" href="./styles.css" />
 </head>
+
 <body>
-  <div class="bg"></div>
+  <header class="topbar">
+    <div class="brand">
+      <span class="shield" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3l7 4v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V7l7-4z"/>
+        </svg>
+      </span>
+      <div class="brandText">
+        <div class="brandName">حِمى</div>
+        <div class="brandSub">منصة قياس الجاهزية التنظيمية</div>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <a href="#analyze">التحليل</a>
+      <a href="#impact">محاكاة الأثر</a>
+      <a href="#about">لماذا حِمى</a>
+    </nav>
+  </header>
 
   <main class="wrap">
-    <header class="hero">
-      <div class="brand">
-        <div class="logo">🛡️</div>
-        <div>
-          <h1>حِمى <span class="accent">درع</span></h1>
-          <p class="muted">تحليل جاهزية النصوص التنظيمية — مع وضع محاكاة للتجربة السريعة.</p>
-        </div>
+    <section class="hero">
+      <h1>محرك سعودي لمحاكاة الأثر التنظيمي وقياس الجاهزية</h1>
+      <p class="muted">
+        أدخل نصًا تنظيميًا (سياسة/إجراء/وصف حادثة) لتحصل على درجة جاهزية، ملخص تنفيذي، وتوصيات قابلة للتنفيذ، مع تقرير PDF رسمي.
+      </p>
+
+      <div class="heroActions">
+        <a class="btn primary" href="#analyze">ابدأ التحليل</a>
+        <a class="btn ghost" href="#impact">محاكاة الأثر</a>
       </div>
+    </section>
 
-      <div class="toggles">
-        <label class="toggle">
-          <input id="useMock" type="checkbox" checked />
-          <span>المحاكاة (Mock)</span>
-        </label>
-
-        <span id="status" class="status">جاهز</span>
-      </div>
-    </header>
-
-    <section class="card">
-      <label class="label">الصقي النص هنا</label>
-      <textarea id="text" rows="10" placeholder="مثال: سياسة الخصوصية..."></textarea>
-
-      <div class="actions">
-        <button id="btnAnalyze" class="btn primary">تحليل</button>
-        <button id="btnPdf" class="btn ghost">تحميل PDF</button>
-        <button id="btnClear" class="btn danger ghost">مسح</button>
+    <!-- التحليل -->
+    <section id="analyze" class="section">
+      <div class="sectionHead">
+        <h2>تحليل الجاهزية</h2>
+        <p class="muted">تشغيل حقيقي عبر API (بدون محاكاة).</p>
       </div>
 
       <div class="grid">
-        <div class="mini">
-          <div class="k">الدرجة</div>
-          <div id="score" class="v">—</div>
+        <div class="card">
+          <label class="label" for="inputText">النص التنظيمي</label>
+          <textarea id="inputText" rows="10" placeholder="الصق النص هنا..."></textarea>
+
+          <div class="row">
+            <button id="btnAnalyze" class="btn primary">تحليل الجاهزية</button>
+            <button id="btnPdf" class="btn">تنزيل التقرير PDF</button>
+            <button id="btnClear" class="btn ghost">مسح</button>
+          </div>
+
+          <div id="status" class="status muted"></div>
         </div>
-        <div class="mini">
-          <div class="k">التصنيف</div>
-          <div id="classif" class="v">—</div>
+
+        <div class="card">
+          <div class="scoreHead">
+            <div>
+              <div class="label">الدرجة</div>
+              <div id="scoreText" class="scoreText">—</div>
+              <div id="classText" class="muted">—</div>
+            </div>
+
+            <div class="ring" aria-label="score ring">
+              <div class="ringInner">
+                <div id="ringValue" class="ringValue">—</div>
+                <div class="ringSub muted">/ 100</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="miniGrid">
+            <div class="mini">
+              <div class="miniK muted">ملخص</div>
+              <div id="miniSummary" class="miniV">—</div>
+            </div>
+            <div class="mini">
+              <div class="miniK muted">توصيات</div>
+              <div id="miniActions" class="miniV">—</div>
+            </div>
+          </div>
         </div>
-        <div class="mini">
-          <div class="k">عالي</div>
-          <div id="gHigh" class="v">—</div>
+      </div>
+
+      <div class="card mt">
+        <div class="tabs">
+          <button class="tab active" data-tab="out">النتيجة</button>
+          <button class="tab" data-tab="json">JSON</button>
         </div>
-        <div class="mini">
-          <div class="k">متوسط</div>
-          <div id="gMid" class="v">—</div>
+
+        <pre id="out" class="pre"></pre>
+        <pre id="json" class="pre hidden"></pre>
+      </div>
+    </section>
+
+    <!-- محاكاة الأثر (واجهة فقط الآن، وتشغيلها نخليه لاحقًا) -->
+    <section id="impact" class="section">
+      <div class="sectionHead">
+        <h2>محاكاة الأثر</h2>
+        <p class="muted">بنفس الأسلوب الرسمي… نضيفها كتشغيل حقيقي في الخطوة القادمة.</p>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <div class="label">سيناريو/حادثة</div>
+          <textarea id="impactText" rows="8" placeholder="اكتب سيناريو مختصر للحادثة أو التغيير..."></textarea>
+          <div class="row">
+            <button id="btnImpact" class="btn ghost" disabled>قريبًا</button>
+          </div>
+          <div class="status muted">هذه الواجهة جاهزة، وسنربطها API لاحقًا.</div>
         </div>
-        <div class="mini">
-          <div class="k">منخفض</div>
-          <div id="gLow" class="v">—</div>
+
+        <div class="card">
+          <div class="label">مخرجات الأثر</div>
+          <div class="muted">—</div>
         </div>
       </div>
     </section>
 
-    <section class="card">
-      <div class="rowHead">
-        <h2>النتيجة التفصيلية</h2>
-        <small class="muted">إذا كانت المحاكاة مطفّية، سيتم استخدام API الحقيقي.</small>
+    <!-- لماذا حِمى -->
+    <section id="about" class="section">
+      <div class="sectionHead">
+        <h2>لماذا حِمى؟</h2>
+        <p class="muted">تركيز على نتائج تنفيذية، لغة عربية رسمية، وتقارير قابلة للطباعة.</p>
       </div>
 
-      <pre id="out" class="out">—</pre>
+      <div class="grid3">
+        <div class="card">
+          <h3>تقرير رسمي PDF</h3>
+          <p class="muted">تقرير منظم للاعتماد الإداري والحوكمة، جاهز للمشاركة.</p>
+        </div>
+        <div class="card">
+          <h3>توصيات قابلة للتنفيذ</h3>
+          <p class="muted">بدون مبالغة لغوية… نقاط واضحة مع سبب التغيير.</p>
+        </div>
+        <div class="card">
+          <h3>هوية Minimal</h3>
+          <p class="muted">واجهة هادئة تركز على التحليل، لا على الاستعراض.</p>
+        </div>
+      </div>
     </section>
 
-    <footer class="footer muted">© حِمى درع — منصة قياس الجاهزية التنظيمية</footer>
+    <footer class="footer muted">© حِمى — منصة قياس الجاهزية التنظيمية</footer>
   </main>
 
-  <script type="module" src="./app.js"></script>
+  <script src="./app.js"></script>
 </body>
 </html>

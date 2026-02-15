@@ -1,145 +1,135 @@
-import { runMockEngine } from "./engine-mock.js";
-
 const $ = (id) => document.getElementById(id);
 
-function setStatus(msg) {
-  $("status").textContent = msg;
-}
+const setStatus = (t) => { $("status").textContent = t || ""; };
 
-function pretty(obj) {
-  try { return JSON.stringify(obj, null, 2); } catch { return String(obj); }
-}
+const setScore = (score, classification) => {
+  const n = Number.isFinite(Number(score)) ? Number(score) : null;
+  $("scoreText").textContent = n === null ? "—" : `${n}`;
+  $("ringValue").textContent = n === null ? "—" : `${n}`;
+  $("classText").textContent = classification || "—";
+};
 
-function normalizeForUI(data) {
-  // نحاول نوحّد الاختلاف بين mock و api
-  const score = Number(data?.score ?? 0);
-  const classification = data?.classification || data?.exposure || "—";
-  const gaps = data?.gaps || data?.counts || {};
-  const high = Number(gaps.high ?? 0);
-  const mid  = Number(gaps.mid ?? gaps.med ?? 0);
-  const low  = Number(gaps.low ?? 0);
+const toPrettyText = (data) => {
+  const lines = [];
+  if (data?.details) lines.push(data.details);
 
-  return { score, classification, high, mid, low, raw: data };
-}
-
-async function callAnalyze(text, useMock) {
-  if (useMock) {
-    return runMockEngine(text);
+  if (Array.isArray(data?.suggestions) && data.suggestions.length) {
+    lines.push("\nاقتراحات:");
+    data.suggestions.forEach((s, i) => {
+      const topic = s.topic ? ` (${s.topic})` : "";
+      lines.push(`${i+1})${topic}`);
+      if (s.before) lines.push(`قبل: ${s.before}`);
+      if (s.after) lines.push(`بعد: ${s.after}`);
+      if (s.reason) lines.push(`السبب: ${s.reason}`);
+      lines.push("");
+    });
   }
 
-  const res = await fetch("/api/analyze", {
+  if (Array.isArray(data?.observations) && data.observations.length) {
+    lines.push("\nملاحظات:");
+    data.observations.forEach((o) => lines.push(`• ${o.area || "عام"}: ${o.text || ""}`));
+  }
+
+  return lines.join("\n").trim() || "—";
+};
+
+async function postJSON(url, payload) {
+  const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text }),
+    body: JSON.stringify(payload),
   });
 
+  const ct = res.headers.get("content-type") || "";
   if (!res.ok) {
-    const msg = await res.text().catch(() => "");
-    throw new Error(`Analyze failed: ${res.status} ${msg}`);
+    let msg = `HTTP ${res.status}`;
+    try {
+      const err = ct.includes("application/json") ? await res.json() : await res.text();
+      msg = err?.error || err?.message || msg;
+    } catch {}
+    throw new Error(msg);
   }
-  return await res.json();
+
+  if (ct.includes("application/json")) return await res.json();
+  return await res.text();
 }
 
-async function downloadPdf(text, useMock) {
-  if (useMock) {
-    // في المحاكاة ما عندنا PDF حقيقي — نخليها رسالة واضحة
-    throw new Error("تحميل PDF يعمل مع API الحقيقي فقط. أطفئي المحاكاة وجربي مرة ثانية.");
-  }
-
-  const res = await fetch("/api/report-pdf", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text }),
+// Tabs
+document.querySelectorAll(".tab").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+    const tab = btn.dataset.tab;
+    $("out").classList.toggle("hidden", tab !== "out");
+    $("json").classList.toggle("hidden", tab !== "json");
   });
+});
 
-  if (!res.ok) {
-    const msg = await res.text().catch(() => "");
-    throw new Error(`PDF failed: ${res.status} ${msg}`);
-  }
-
-  const blob = await res.blob();
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "hima-dira-report.pdf";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-}
-
-function updateDashboard(ui) {
-  $("score").textContent = Number.isFinite(ui.score) ? `${ui.score} / 100` : "—";
-  $("classif").textContent = ui.classification || "—";
-  $("gHigh").textContent = String(ui.high ?? "—");
-  $("gMid").textContent = String(ui.mid ?? "—");
-  $("gLow").textContent = String(ui.low ?? "—");
-  $("out").textContent = pretty(ui.raw);
-}
-
-function setBusy(isBusy) {
-  $("btnAnalyze").disabled = isBusy;
-  $("btnPdf").disabled = isBusy;
-  $("btnClear").disabled = isBusy;
-}
+$("btnClear").addEventListener("click", () => {
+  $("inputText").value = "";
+  $("out").textContent = "";
+  $("json").textContent = "";
+  setScore(null, null);
+  $("miniSummary").textContent = "—";
+  $("miniActions").textContent = "—";
+  setStatus("");
+});
 
 $("btnAnalyze").addEventListener("click", async () => {
-  const text = String($("text").value || "").trim();
-  const useMock = $("useMock").checked;
-
-  if (!text) {
-    setStatus("اكتبي/الصقي نص أولًا");
-    return;
-  }
+  const text = String($("inputText").value || "").trim();
+  if (!text) return setStatus("اكتبي/الصقي النص أولاً.");
 
   try {
-    setBusy(true);
-    setStatus(useMock ? "تشغيل المحاكاة..." : "تحليل عبر API...");
-    const data = await callAnalyze(text, useMock);
-    const ui = normalizeForUI(data);
-    updateDashboard(ui);
-    setStatus("تم ✅");
+    setStatus("جاري التحليل...");
+    const data = await postJSON("/api/analyze", { text });
+
+    // نتوقع شكل normalized من endpoint
+    setScore(data?.score ?? "—", data?.classification ?? "—");
+    $("miniSummary").textContent = Array.isArray(data?.executive_summary) ? `${data.executive_summary.length} نقاط` : "—";
+    $("miniActions").textContent = Array.isArray(data?.recommended_actions) ? `${data.recommended_actions.length} توصيات` : "—";
+
+    $("out").textContent = toPrettyText({
+      details: data?.details || (Array.isArray(data?.executive_summary) ? data.executive_summary.join("\n") : ""),
+      suggestions: data?.rewrite_suggestions || data?.suggestions || [],
+      observations: data?.observations || [],
+    });
+
+    $("json").textContent = JSON.stringify(data, null, 2);
+    setStatus("تم التحليل ✅");
   } catch (e) {
-    setStatus("خطأ ❌");
-    $("out").textContent = String(e?.message || e);
-  } finally {
-    setBusy(false);
+    setStatus("خطأ: " + (e?.message || e));
   }
 });
 
 $("btnPdf").addEventListener("click", async () => {
-  const text = String($("text").value || "").trim();
-  const useMock = $("useMock").checked;
-
-  if (!text) {
-    setStatus("اكتبي/الصقي نص أولًا");
-    return;
-  }
+  const text = String($("inputText").value || "").trim();
+  if (!text) return setStatus("اكتبي/الصقي النص أولاً.");
 
   try {
-    setBusy(true);
-    setStatus("تجهيز PDF...");
-    await downloadPdf(text, useMock);
-    setStatus("تم تنزيل PDF ✅");
+    setStatus("جاري إنشاء PDF...");
+    const res = await fetch("/api/report-pdf", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    });
+
+    if (!res.ok) {
+      const msg = await res.text().catch(() => "");
+      throw new Error(msg || `HTTP ${res.status}`);
+    }
+
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "hima-report.pdf";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+
+    setStatus("تم تنزيل التقرير ✅");
   } catch (e) {
-    setStatus("تعذّر التنزيل");
-    $("out").textContent = String(e?.message || e);
-  } finally {
-    setBusy(false);
+    setStatus("خطأ: " + (e?.message || e));
   }
-});
-
-$("btnClear").addEventListener("click", () => {
-  $("text").value = "";
-  $("out").textContent = "—";
-  $("score").textContent = "—";
-  $("classif").textContent = "—";
-  $("gHigh").textContent = "—";
-  $("gMid").textContent = "—";
-  $("gLow").textContent = "—";
-  setStatus("تم المسح");
-});
-
-$("useMock").addEventListener("change", () => {
-  setStatus($("useMock").checked ? "المحاكاة مفعلة" : "المحاكاة مطفّية — استخدام API");
 });
