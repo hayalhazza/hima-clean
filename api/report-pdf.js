@@ -74,7 +74,7 @@ function shieldSVG() {
 function readFontBase64() {
   // نقرأ خط IBM Plex Arabic من الريبو (ضيفيه هنا):
   // public/fonts/IBMPlexArabic-Regular.ttf
-  const fontPath = path.join(process.cwd(), "public", "fonts", "IBMPlexArabic-Regular.ttf");
+  const fontPath = path.join(process.cwd(), "public/fonts/IBMPlexSansArabic-Regular.ttf")
   const buf = fs.readFileSync(fontPath);
   return buf.toString("base64");
 }
