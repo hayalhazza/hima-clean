@@ -5,157 +5,160 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>حِمى — منصة قياس الجاهزية التنظيمية</title>
 
-  <!-- IBM Plex Arabic -->
+  <!-- IBM Plex Arabic (من Google Fonts) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="./styles.css" />
 </head>
 
 <body>
+  <div class="bg">
+    <div class="glow g1"></div>
+    <div class="glow g2"></div>
+    <div class="grid"></div>
+  </div>
+
   <header class="topbar">
     <div class="brand">
-      <span class="shield" aria-hidden="true">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 3l7 4v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V7l7-4z"/>
+      <div class="mark" aria-hidden="true">
+        <!-- درع Minimal بالـ SVG -->
+        <svg viewBox="0 0 24 24" role="img" aria-label="Shield">
+          <path d="M12 2.25c-.3 0-.6.07-.87.2L5.6 4.95a1.6 1.6 0 0 0-1 1.47v6.1c0 5 3.45 8.95 7.13 10.57.17.08.36.12.54.12s.37-.04.54-.12c3.68-1.62 7.13-5.57 7.13-10.57v-6.1a1.6 1.6 0 0 0-1-1.47l-5.53-2.5c-.27-.13-.57-.2-.87-.2Z"/>
+          <path d="M12 6.2v13.4" opacity=".28"/>
         </svg>
-      </span>
+      </div>
       <div class="brandText">
         <div class="brandName">حِمى</div>
-        <div class="brandSub">منصة قياس الجاهزية التنظيمية</div>
+        <div class="brandTag">منصة قياس الجاهزية التنظيمية</div>
       </div>
     </div>
 
     <nav class="nav">
-      <a href="#analyze">التحليل</a>
-      <a href="#impact">محاكاة الأثر</a>
-      <a href="#about">لماذا حِمى</a>
+      <a class="navLink" href="#analyze">التحليل</a>
+      <a class="navLink" href="#report">التقرير</a>
     </nav>
   </header>
 
   <main class="wrap">
     <section class="hero">
-      <h1>محرك سعودي لمحاكاة الأثر التنظيمي وقياس الجاهزية</h1>
-      <p class="muted">
-        أدخل نصًا تنظيميًا (سياسة/إجراء/وصف حادثة) لتحصل على درجة جاهزية، ملخص تنفيذي، وتوصيات قابلة للتنفيذ، مع تقرير PDF رسمي.
-      </p>
-
-      <div class="heroActions">
-        <a class="btn primary" href="#analyze">ابدأ التحليل</a>
-        <a class="btn ghost" href="#impact">محاكاة الأثر</a>
-      </div>
-    </section>
-
-    <!-- التحليل -->
-    <section id="analyze" class="section">
-      <div class="sectionHead">
-        <h2>تحليل الجاهزية</h2>
-        <p class="muted">تشغيل حقيقي عبر API (بدون محاكاة).</p>
-      </div>
-
-      <div class="grid">
-        <div class="card">
-          <label class="label" for="inputText">النص التنظيمي</label>
-          <textarea id="inputText" rows="10" placeholder="الصق النص هنا..."></textarea>
-
-          <div class="row">
-            <button id="btnAnalyze" class="btn primary">تحليل الجاهزية</button>
-            <button id="btnPdf" class="btn">تنزيل التقرير PDF</button>
-            <button id="btnClear" class="btn ghost">مسح</button>
-          </div>
-
-          <div id="status" class="status muted"></div>
+      <div class="heroCard">
+        <div class="heroTop">
+          <div class="badge">محرك التحليل</div>
+          <div class="statusDot" title="جاهز"></div>
         </div>
 
-        <div class="card">
-          <div class="scoreHead">
-            <div>
-              <div class="label">الدرجة</div>
-              <div id="scoreText" class="scoreText">—</div>
-              <div id="classText" class="muted">—</div>
-            </div>
+        <h1 class="heroTitle">
+          قياس جاهزية نصوص الخصوصية والسياسات
+          <span class="heroTitleAccent">بشكل واضح وعملي</span>
+        </h1>
 
-            <div class="ring" aria-label="score ring">
-              <div class="ringInner">
-                <div id="ringValue" class="ringValue">—</div>
-                <div class="ringSub muted">/ 100</div>
-              </div>
-            </div>
+        <p class="heroDesc">
+          أدخلي نصك العربي، ثم احصلي على تقييم رقمي وملاحظات تنفيذية واقتراحات إعادة صياغة—مع إمكانية تنزيل تقرير PDF رسمي.
+        </p>
+
+        <div class="heroMeta">
+          <div class="metaItem">
+            <div class="metaLabel">ملاحظة</div>
+            <div class="metaValue">لا يتم إضافة معلومات خارج النص المُدخل.</div>
           </div>
-
-          <div class="miniGrid">
-            <div class="mini">
-              <div class="miniK muted">ملخص</div>
-              <div id="miniSummary" class="miniV">—</div>
-            </div>
-            <div class="mini">
-              <div class="miniK muted">توصيات</div>
-              <div id="miniActions" class="miniV">—</div>
-            </div>
+          <div class="metaItem">
+            <div class="metaLabel">الخصوصية</div>
+            <div class="metaValue">المعالجة تتم عند الطلب فقط.</div>
           </div>
-        </div>
-      </div>
-
-      <div class="card mt">
-        <div class="tabs">
-          <button class="tab active" data-tab="out">النتيجة</button>
-          <button class="tab" data-tab="json">JSON</button>
-        </div>
-
-        <pre id="out" class="pre"></pre>
-        <pre id="json" class="pre hidden"></pre>
-      </div>
-    </section>
-
-    <!-- محاكاة الأثر (واجهة فقط الآن، وتشغيلها نخليه لاحقًا) -->
-    <section id="impact" class="section">
-      <div class="sectionHead">
-        <h2>محاكاة الأثر</h2>
-        <p class="muted">بنفس الأسلوب الرسمي… نضيفها كتشغيل حقيقي في الخطوة القادمة.</p>
-      </div>
-
-      <div class="grid">
-        <div class="card">
-          <div class="label">سيناريو/حادثة</div>
-          <textarea id="impactText" rows="8" placeholder="اكتب سيناريو مختصر للحادثة أو التغيير..."></textarea>
-          <div class="row">
-            <button id="btnImpact" class="btn ghost" disabled>قريبًا</button>
-          </div>
-          <div class="status muted">هذه الواجهة جاهزة، وسنربطها API لاحقًا.</div>
-        </div>
-
-        <div class="card">
-          <div class="label">مخرجات الأثر</div>
-          <div class="muted">—</div>
         </div>
       </div>
     </section>
 
-    <!-- لماذا حِمى -->
-    <section id="about" class="section">
-      <div class="sectionHead">
-        <h2>لماذا حِمى؟</h2>
-        <p class="muted">تركيز على نتائج تنفيذية، لغة عربية رسمية، وتقارير قابلة للطباعة.</p>
+    <section id="analyze" class="panel">
+      <div class="panelHead">
+        <div>
+          <h2 class="panelTitle">أدخلي النص للتحليل</h2>
+          <p class="panelSub">يفضل لصق النص كاملًا كما هو.</p>
+        </div>
+        <div class="actions">
+          <button id="btnMock" class="btn ghost" type="button">محاكاة</button>
+          <button id="btnAnalyze" class="btn primary" type="button">تحليل</button>
+        </div>
       </div>
 
-      <div class="grid3">
-        <div class="card">
-          <h3>تقرير رسمي PDF</h3>
-          <p class="muted">تقرير منظم للاعتماد الإداري والحوكمة، جاهز للمشاركة.</p>
-        </div>
-        <div class="card">
-          <h3>توصيات قابلة للتنفيذ</h3>
-          <p class="muted">بدون مبالغة لغوية… نقاط واضحة مع سبب التغيير.</p>
-        </div>
-        <div class="card">
-          <h3>هوية Minimal</h3>
-          <p class="muted">واجهة هادئة تركز على التحليل، لا على الاستعراض.</p>
+      <div class="inputCard">
+        <textarea id="txt" placeholder="الصقي النص هنا..."></textarea>
+        <div class="hint">
+          <span>تلميح: ابدئي بـ 2–3 فقرات للحصول على نتيجة أسرع.</span>
+          <span id="charCount">0</span>
         </div>
       </div>
     </section>
 
-    <footer class="footer muted">© حِمى — منصة قياس الجاهزية التنظيمية</footer>
+    <section id="report" class="panel">
+      <div class="panelHead">
+        <div>
+          <h2 class="panelTitle">النتيجة</h2>
+          <p class="panelSub">ستظهر النتائج هنا بخط عريض وواضح.</p>
+        </div>
+        <div class="actions">
+          <button id="btnPdf" class="btn secondary" type="button">تحميل PDF</button>
+        </div>
+      </div>
+
+      <div class="resultGrid">
+        <div class="resultCard">
+          <div class="resultTitle">ملخص التحليل</div>
+          <pre id="out" class="out"></pre>
+        </div>
+
+        <div class="sideCard">
+          <div class="sideTitle">مؤشرات سريعة</div>
+          <div class="kpis">
+            <div class="kpi">
+              <div class="kpiLabel">الدرجة</div>
+              <div class="kpiValue" id="kpiScore">—</div>
+            </div>
+            <div class="kpi">
+              <div class="kpiLabel">High</div>
+              <div class="kpiValue" id="kpiHigh">—</div>
+            </div>
+            <div class="kpi">
+              <div class="kpiLabel">Mid</div>
+              <div class="kpiValue" id="kpiMid">—</div>
+            </div>
+            <div class="kpi">
+              <div class="kpiLabel">Low</div>
+              <div class="kpiValue" id="kpiLow">—</div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="sideTitle">المحاور</div>
+          <div class="bars">
+            <div class="barRow">
+              <div class="barLabel">الإحاطة الواجبة</div>
+              <div class="barTrack"><div class="barFill" id="b1"></div></div>
+              <div class="barVal" id="b1v">—</div>
+            </div>
+            <div class="barRow">
+              <div class="barLabel">الموافقة والعدول</div>
+              <div class="barTrack"><div class="barFill" id="b2"></div></div>
+              <div class="barVal" id="b2v">—</div>
+            </div>
+            <div class="barRow">
+              <div class="barLabel">الاحتفاظ والإتلاف</div>
+              <div class="barTrack"><div class="barFill" id="b3"></div></div>
+              <div class="barVal" id="b3v">—</div>
+            </div>
+          </div>
+
+          <div class="note">
+            إذا رغبتِ، نقدر نضيف “شعار الدرع” داخل تقرير PDF أيضًا لاحقًا.
+          </div>
+        </div>
+      </div>
+
+      <footer class="footer">© حِمى — منصة قياس الجاهزية التنظيمية</footer>
+    </section>
   </main>
 
   <script src="./app.js"></script>

@@ -1,122 +1,131 @@
 const $ = (id) => document.getElementById(id);
 
-const setStatus = (t) => { $("status").textContent = t || ""; };
+const txt = $("txt");
+const out = $("out");
+const cc = $("charCount");
 
-const setScore = (score, classification) => {
-  const n = Number.isFinite(Number(score)) ? Number(score) : null;
-  $("scoreText").textContent = n === null ? "—" : `${n}`;
-  $("ringValue").textContent = n === null ? "—" : `${n}`;
-  $("classText").textContent = classification || "—";
-};
+const kpiScore = $("kpiScore");
+const kpiHigh  = $("kpiHigh");
+const kpiMid   = $("kpiMid");
+const kpiLow   = $("kpiLow");
 
-const toPrettyText = (data) => {
+const b1 = $("b1"), b2 = $("b2"), b3 = $("b3");
+const b1v = $("b1v"), b2v = $("b2v"), b3v = $("b3v");
+
+function safeNum(n, fallback = 0){
+  const x = Number(n);
+  return Number.isFinite(x) ? x : fallback;
+}
+
+function setBar(el, val){
+  const v = Math.max(0, Math.min(100, safeNum(val, 0)));
+  el.style.width = v + "%";
+}
+
+function formatResult(data){
+  const score = safeNum(data?.score, 0);
+  const gaps = data?.gaps || {};
+  const subs = data?.subs || {};
+
   const lines = [];
-  if (data?.details) lines.push(data.details);
+  lines.push(`الدرجة الإجمالية: ${score} / 100`);
+  lines.push("");
+  lines.push("مؤشرات الإكمال:");
+  lines.push(`- High: ${safeNum(gaps.high, 0)}`);
+  lines.push(`- Mid: ${safeNum(gaps.mid, 0)}`);
+  lines.push(`- Low: ${safeNum(gaps.low, 0)}`);
+  lines.push("");
 
-  if (Array.isArray(data?.suggestions) && data.suggestions.length) {
-    lines.push("\nاقتراحات:");
-    data.suggestions.forEach((s, i) => {
-      const topic = s.topic ? ` (${s.topic})` : "";
-      lines.push(`${i+1})${topic}`);
-      if (s.before) lines.push(`قبل: ${s.before}`);
-      if (s.after) lines.push(`بعد: ${s.after}`);
-      if (s.reason) lines.push(`السبب: ${s.reason}`);
+  const details = (data?.details || "").trim();
+  if (details) {
+    lines.push("تفاصيل:");
+    lines.push(details);
+    lines.push("");
+  }
+
+  const obs = Array.isArray(data?.observations) ? data.observations : [];
+  if (obs.length){
+    lines.push("ملاحظات:");
+    obs.slice(0, 8).forEach((o) => {
+      lines.push(`• (${o.area || "عام"}) ${o.text || ""}`.trim());
+    });
+    lines.push("");
+  }
+
+  const sug = Array.isArray(data?.suggestions) ? data.suggestions : [];
+  if (sug.length){
+    lines.push("اقتراحات إعادة صياغة:");
+    sug.slice(0, 8).forEach((s, i) => {
+      lines.push(`${i+1}) ${s.topic || "—"}`);
+      lines.push(`   قبل: ${s.before || "—"}`);
+      lines.push(`   بعد: ${s.after || "—"}`);
+      lines.push(`   السبب: ${s.reason || "—"}`);
       lines.push("");
     });
   }
 
-  if (Array.isArray(data?.observations) && data.observations.length) {
-    lines.push("\nملاحظات:");
-    data.observations.forEach((o) => lines.push(`• ${o.area || "عام"}: ${o.text || ""}`));
-  }
+  return lines.join("\n").trim();
+}
 
-  return lines.join("\n").trim() || "—";
-};
+function applyKpis(data){
+  const score = safeNum(data?.score, 0);
+  const gaps = data?.gaps || {};
+  const subs = data?.subs || {};
 
-async function postJSON(url, payload) {
+  kpiScore.textContent = score;
+  kpiHigh.textContent  = safeNum(gaps.high, 0);
+  kpiMid.textContent   = safeNum(gaps.mid, 0);
+  kpiLow.textContent   = safeNum(gaps.low, 0);
+
+  const s1 = safeNum(subs["الإحاطة الواجبة"], 0);
+  const s2 = safeNum(subs["الموافقة والعدول"], 0);
+  const s3 = safeNum(subs["الاحتفاظ والإتلاف"], 0);
+
+  setBar(b1, s1); setBar(b2, s2); setBar(b3, s3);
+  b1v.textContent = s1; b2v.textContent = s2; b3v.textContent = s3;
+}
+
+async function postJson(url, body){
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(body),
   });
-
-  const ct = res.headers.get("content-type") || "";
   if (!res.ok) {
-    let msg = `HTTP ${res.status}`;
-    try {
-      const err = ct.includes("application/json") ? await res.json() : await res.text();
-      msg = err?.error || err?.message || msg;
-    } catch {}
-    throw new Error(msg);
+    const t = await res.text().catch(()=> "");
+    throw new Error(`HTTP ${res.status}: ${t || res.statusText}`);
   }
-
-  if (ct.includes("application/json")) return await res.json();
-  return await res.text();
+  return res;
 }
 
-// Tabs
-document.querySelectorAll(".tab").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll(".tab").forEach((b) => b.classList.remove("active"));
-    btn.classList.add("active");
-    const tab = btn.dataset.tab;
-    $("out").classList.toggle("hidden", tab !== "out");
-    $("json").classList.toggle("hidden", tab !== "json");
-  });
-});
-
-$("btnClear").addEventListener("click", () => {
-  $("inputText").value = "";
-  $("out").textContent = "";
-  $("json").textContent = "";
-  setScore(null, null);
-  $("miniSummary").textContent = "—";
-  $("miniActions").textContent = "—";
-  setStatus("");
+txt.addEventListener("input", () => {
+  cc.textContent = (txt.value || "").length;
 });
 
 $("btnAnalyze").addEventListener("click", async () => {
-  const text = String($("inputText").value || "").trim();
-  if (!text) return setStatus("اكتبي/الصقي النص أولاً.");
+  try{
+    const text = (txt.value || "").trim();
+    if (!text) return (out.textContent = "اكتبي نصًا أولًا.");
 
-  try {
-    setStatus("جاري التحليل...");
-    const data = await postJSON("/api/analyze", { text });
+    out.textContent = "جارٍ التحليل...";
+    const res = await postJson("/api/analyze", { text });
+    const data = await res.json();
 
-    // نتوقع شكل normalized من endpoint
-    setScore(data?.score ?? "—", data?.classification ?? "—");
-    $("miniSummary").textContent = Array.isArray(data?.executive_summary) ? `${data.executive_summary.length} نقاط` : "—";
-    $("miniActions").textContent = Array.isArray(data?.recommended_actions) ? `${data.recommended_actions.length} توصيات` : "—";
-
-    $("out").textContent = toPrettyText({
-      details: data?.details || (Array.isArray(data?.executive_summary) ? data.executive_summary.join("\n") : ""),
-      suggestions: data?.rewrite_suggestions || data?.suggestions || [],
-      observations: data?.observations || [],
-    });
-
-    $("json").textContent = JSON.stringify(data, null, 2);
-    setStatus("تم التحليل ✅");
-  } catch (e) {
-    setStatus("خطأ: " + (e?.message || e));
+    out.textContent = formatResult(data);
+    applyKpis(data);
+    location.hash = "#report";
+  }catch(e){
+    out.textContent = "خطأ: " + (e?.message || e);
   }
 });
 
 $("btnPdf").addEventListener("click", async () => {
-  const text = String($("inputText").value || "").trim();
-  if (!text) return setStatus("اكتبي/الصقي النص أولاً.");
+  try{
+    const text = (txt.value || "").trim();
+    if (!text) return (out.textContent = "اكتبي نصًا أولًا.");
 
-  try {
-    setStatus("جاري إنشاء PDF...");
-    const res = await fetch("/api/report-pdf", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text }),
-    });
-
-    if (!res.ok) {
-      const msg = await res.text().catch(() => "");
-      throw new Error(msg || `HTTP ${res.status}`);
-    }
+    out.textContent = "جارٍ إنشاء تقرير PDF...";
+    const res = await postJson("/api/report-pdf", { text });
 
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
@@ -128,8 +137,23 @@ $("btnPdf").addEventListener("click", async () => {
     a.remove();
     URL.revokeObjectURL(url);
 
-    setStatus("تم تنزيل التقرير ✅");
-  } catch (e) {
-    setStatus("خطأ: " + (e?.message || e));
+    out.textContent = "تم تنزيل التقرير ✅";
+  }catch(e){
+    out.textContent = "خطأ: " + (e?.message || e);
   }
+});
+
+$("btnMock").addEventListener("click", () => {
+  // نص تجريبي (بدون عبارة “نسخة تجريبية”)
+  const demo = `
+سياسة الخصوصية
+نقوم بجمع بعض البيانات مثل الاسم ورقم الهوية وتاريخ الميلاد عند الحاجة لتقديم الخدمة.
+قد نشارك البيانات مع شركائنا لأغراض تشغيلية وتحسين التجربة.
+باستخدامك للخدمة فإنك توافق على جميع عمليات المعالجة.
+نحتفظ بالبيانات طالما نرى ذلك مناسبًا أو وفق متطلبات النظام.
+`.trim();
+
+  txt.value = demo;
+  cc.textContent = demo.length;
+  out.textContent = "تم تحميل نص محاكاة. اضغطي “تحليل”.";
 });
