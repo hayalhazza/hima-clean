@@ -1,15 +1,35 @@
 import OpenAI from "openai";
 import PDFDocument from "pdfkit";
+import path from "path";
+import { fileURLToPath } from "url";
+
+// (اختياري) لو احتجتي __dirname لاحقًا
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export default async function handler(req, res) {
   try {
-    if (req.method !== "POST") return res.status(405).json({ error: "Method Not Allowed" });
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Method Not Allowed" });
+    }
 
-    const text = String(req.body?.text || "").trim();
+    // بعض الأحيان Vercel ترسل body كنص
+    let body = req.body;
+    if (typeof body === "string") {
+      try {
+        body = JSON.parse(body);
+      } catch {
+        body = {};
+      }
+    }
+
+    const text = String(body?.text || "").trim();
     if (!text) return res.status(400).json({ error: "Missing text" });
 
     const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) return res.status(500).json({ error: "Missing OPENAI_API_KEY in env" });
+    if (!apiKey) {
+      return res.status(500).json({ error: "Missing OPENAI_API_KEY in env" });
+    }
 
     const client = new OpenAI({ apiKey });
 
@@ -38,7 +58,11 @@ export default async function handler(req, res) {
     });
 
     let report = {};
-    try { report = JSON.parse(analyzeResp.output_text || "{}"); } catch { report = {}; }
+    try {
+      report = JSON.parse(analyzeResp.output_text || "{}");
+    } catch {
+      report = {};
+    }
 
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", "attachment; filename=hima-report.pdf");
@@ -46,11 +70,29 @@ export default async function handler(req, res) {
     const doc = new PDFDocument({ size: "A4", margin: 50 });
     doc.pipe(res);
 
+    // ✅ تحميل خط عربي من public/fonts (مناسب لـ Vercel)
+    try {
+      const fontPath = path.join(
+        process.cwd(),
+        "public",
+        "fonts",
+        "NotoNaskhArabic-Regular.ttf"
+      );
+      doc.font(fontPath);
+    } catch {
+      // إذا ما لقى الخط، يكمل بالخط الافتراضي
+    }
+
     const rtl = (t, opts = {}) => doc.text(t || "", { align: "right", ...opts });
 
     const line = () => {
       doc.moveDown(0.6);
-      doc.strokeColor("#E5E7EB").lineWidth(1).moveTo(50, doc.y).lineTo(545, doc.y).stroke();
+      doc
+        .strokeColor("#E5E7EB")
+        .lineWidth(1)
+        .moveTo(50, doc.y)
+        .lineTo(545, doc.y)
+        .stroke();
       doc.moveDown(0.8);
       doc.fillColor("#111827");
     };
