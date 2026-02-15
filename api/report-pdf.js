@@ -125,7 +125,7 @@ export default async function handler(req, res) {
   :root{
     --text:#0b1220;
     --muted:#475569;
-    --line:#e5e7eb;
+    --line:#94a3b8;
     --card:#f8fafc;
     --blue:#2563eb;
     --green:#16a34a;
@@ -147,7 +147,7 @@ export default async function handler(req, res) {
     justify-content:space-between;
     gap:18px;
     padding-bottom:14px;
-    border-bottom:1px solid var(--line);
+    border-top:2px solid var(--line);
     margin-bottom:18px;
   }
   .brand{
@@ -217,10 +217,17 @@ export default async function handler(req, res) {
   .kpi .label{ color:var(--muted); font-weight:800; font-size:12px; }
   .kpi .value{ font-weight:900; font-size:18px; margin-top:4px; }
   .section{
-    margin-top:18px;
-    padding-top:14px;
-    border-top:1px solid var(--line);
-    break-inside: avoid;
+  margin-top:22px;
+  padding-top:0;
+}
+.sectionTitle{
+  font-weight:900;
+  font-size:14px;
+  margin:0 0 10px;
+  padding-bottom:6px;
+  border-bottom:2px solid var(--line);
+}
+  ak-inside: avoid;
   }
   .sectionTitle{
     font-weight:900;
