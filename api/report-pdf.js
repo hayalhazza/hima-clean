@@ -1,3 +1,5 @@
+import fs from "fs";
+import path from "path";
 import OpenAI from "openai";
 import chromium from "@sparticuz/chromium";
 import puppeteer from "puppeteer-core";
@@ -10,9 +12,6 @@ function esc(s = "") {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
-}
-function nl2br(s = "") {
-  return esc(s).replaceAll("\n", "<br/>");
 }
 function toList(arr) {
   if (!Array.isArray(arr) || arr.length === 0) return "<div class='muted'>—</div>";
@@ -46,21 +45,17 @@ function toRewrite(arr) {
         <div class="num">${i + 1}</div>
         <div class="topic">${esc(r.topic || "—")}</div>
       </div>
-
       <div class="rewriteGrid">
         <div class="box">
           <div class="label">قبل</div>
-          <div class="text">${nl2br(r.before || "—")}</div>
+          <div class="text">${esc(r.before || "—")}</div>
         </div>
         <div class="box">
           <div class="label">بعد</div>
-          <div class="text">${nl2br(r.after || "—")}</div>
+          <div class="text">${esc(r.after || "—")}</div>
         </div>
       </div>
-
-      <div class="reason">
-        <span class="labelInline">السبب:</span> ${esc(r.reason || "—")}
-      </div>
+      <div class="reason"><span class="labelInline">السبب:</span> ${esc(r.reason || "—")}</div>
     </div>
   `
     )
@@ -76,13 +71,18 @@ function shieldSVG() {
   </svg>`;
 }
 
+function readFontBase64() {
+  // نقرأ خط IBM Plex Arabic من الريبو (ضيفيه هنا):
+  // public/fonts/IBMPlexArabic-Regular.ttf
+  const fontPath = path.join(process.cwd(), "public", "fonts", "IBMPlexArabic-Regular.ttf");
+  const buf = fs.readFileSync(fontPath);
+  return buf.toString("base64");
+}
+
 export default async function handler(req, res) {
   let browser;
-
   try {
-    if (req.method !== "POST") {
-      return res.status(405).json({ error: "Method Not Allowed" });
-    }
+    if (req.method !== "POST") return res.status(405).json({ error: "Method Not Allowed" });
 
     // Vercel أحيانًا يرسل body كنص
     let body = req.body;
@@ -107,7 +107,7 @@ export default async function handler(req, res) {
 مهم جدًا: لا تستخدم كلمة "فجوات" إطلاقًا.
 أخرج JSON فقط بهذه البنية:
 {
-  "title":"تقرير حِمى الرسمي",
+  "title":"تقرير حِمى",
   "date":"(تاريخ مختصر)",
   "score":0-100,
   "classification":"مستقر|تعرض متوسط|تعرض مرتفع|تعرض حرج",
@@ -135,10 +135,13 @@ export default async function handler(req, res) {
       report = {};
     }
 
-    const title = report.title || "تقرير حِمى الرسمي";
+    const title = report.title || "تقرير حِمى";
     const date = report.date || new Date().toLocaleDateString("ar-SA");
     const score = Number(report.score ?? 0);
     const classification = report.classification || "—";
+
+    // ✅ تضمين الخط داخل CSS (بدون Google Fonts)
+    const fontB64 = readFontBase64();
 
     const html = `
 <!doctype html>
@@ -146,9 +149,25 @@ export default async function handler(req, res) {
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Arabic:wght@400;600;700;900&display=swap" rel="stylesheet">
 <style>
-  @page { size: A4; margin: 36px 32px; }
+  @font-face{
+    font-family:"IBM Plex Arabic Embedded";
+    src:url(data:font/ttf;base64,${fontB64}) format("truetype");
+    font-weight:400;
+    font-style:normal;
+  }
+  @font-face{
+    font-family:"IBM Plex Arabic Embedded";
+    src:url(data:font/ttf;base64,${fontB64}) format("truetype");
+    font-weight:700;
+    font-style:normal;
+  }
+  @font-face{
+    font-family:"IBM Plex Arabic Embedded";
+    src:url(data:font/ttf;base64,${fontB64}) format("truetype");
+    font-weight:900;
+    font-style:normal;
+  }
 
   :root{
     --text:#0b1220;
@@ -158,17 +177,16 @@ export default async function handler(req, res) {
     --blue:#2563eb;
     --green:#16a34a;
   }
-
   *{ box-sizing:border-box; }
-
   body{
     margin:0;
-    font-family:"IBM Plex Arabic", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    padding:38px 44px;
+    font-family: "IBM Plex Arabic Embedded", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
     color:var(--text);
     direction:rtl;
     text-align:right;
     line-height:2.05;
-    background:#fff;
+    background:white;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
@@ -182,39 +200,30 @@ export default async function handler(req, res) {
     border-bottom:1px solid var(--line);
     margin-bottom:18px;
   }
-
   .brand{ display:flex; align-items:center; gap:12px; }
   .brandText .name{ font-weight:900; font-size:18px; letter-spacing:.2px; }
-  .brandText .tag{ color:var(--muted); font-weight:700; font-size:12px; margin-top:2px; }
+  .brandText .tag{ color:var(--muted); font-weight:600; font-size:12px; margin-top:2px; }
 
-  .shield{ width:40px;height:40px; fill:url(#g); }
+  .shield{ width:40px;height:40px; fill: url(#g); }
   .shield .inner{ fill: rgba(255,255,255,.55); }
 
   .meta{ text-align:left; min-width:220px; }
   .pill{
-    display:inline-flex;
-    align-items:center;
-    gap:8px;
+    display:inline-flex; align-items:center; gap:8px;
     padding:8px 12px;
     border:1px solid var(--line);
     border-radius:999px;
     background:var(--card);
-    font-weight:900;
-    font-size:12px;
+    font-weight:800; font-size:12px;
   }
   .dot{ width:10px;height:10px;border-radius:999px;background:var(--green); }
-
   .kv{
     margin-top:10px;
-    display:flex;
-    flex-direction:column;
-    gap:6px;
-    font-size:12px;
-    color:var(--muted);
-    font-weight:800;
+    display:flex; flex-direction:column; gap:6px;
+    font-size:12px; color:var(--muted); font-weight:700;
   }
 
-  h1{ margin:0 0 8px; font-weight:900; font-size:22px; }
+  h1{ margin: 0 0 8px; font-weight:900; font-size:22px; }
 
   .scoreRow{ display:flex; gap:10px; flex-wrap:wrap; margin-top:6px; }
   .kpi{
@@ -224,16 +233,11 @@ export default async function handler(req, res) {
     padding:10px 12px;
     min-width: 180px;
   }
-  .kpi .label{ color:var(--muted); font-weight:900; font-size:12px; }
-  .kpi .value{ font-weight:900; font-size:18px; margin-top:4px; color:var(--text); }
+  .kpi .label{ color:var(--muted); font-weight:800; font-size:12px; }
+  .kpi .value{ font-weight:900; font-size:18px; margin-top:4px; }
 
-  /* ✅ الأقسام + السطر تحت العنوان */
-  .section{
-    margin-top:22px;
-    padding-top:0;
-    break-inside: avoid;
-    page-break-inside: avoid;
-  }
+  /* ✅ شكل تقارير الشركات + سطر تحت العنوان */
+  .section{ margin-top:22px; padding-top:0; break-inside: avoid; }
   .sectionTitle{
     font-weight:900;
     font-size:14px;
@@ -248,13 +252,13 @@ export default async function handler(req, res) {
     background:var(--card);
     border-radius:14px;
     padding:12px 14px;
-    color:var(--text);
+    font-weight:600;
+    font-size:12.5px;
   }
 
-  ul{ margin:0; padding-right:18px; color:var(--text); }
-  li{ margin:6px 0; }
-
-  .muted{ color:var(--muted); font-weight:700; }
+  ul{ margin: 0; padding-right: 18px; }
+  li{ margin: 6px 0; }
+  .muted{ color:var(--muted); font-weight:600; }
 
   .table{
     border:1px solid var(--line);
@@ -268,7 +272,7 @@ export default async function handler(req, res) {
     border-top:1px solid var(--line);
   }
   .tr:first-child{ border-top:none; }
-  .td{ padding:10px 12px; font-size:12.5px; font-weight:700; color:var(--text); }
+  .td{ padding:10px 12px; font-size:12.5px; font-weight:650; }
   .td.area{
     background: rgba(37,99,235,.07);
     font-weight:900;
@@ -282,7 +286,6 @@ export default async function handler(req, res) {
     padding:12px 14px;
     margin: 10px 0;
     break-inside: avoid;
-    page-break-inside: avoid;
   }
   .rewriteHead{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
   .num{
@@ -293,13 +296,12 @@ export default async function handler(req, res) {
     font-weight:900;
     font-size:12px;
   }
-  .topic{ font-weight:900; font-size:13px; color:var(--text); }
-
+  .topic{ font-weight:900; font-size:13px; }
   .rewriteGrid{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
-  .box .label{ font-size:11px; font-weight:900; color:var(--muted); margin-bottom:6px; }
-  .box .text{ font-size:12.5px; font-weight:700; color:var(--text); }
 
-  .reason{ margin-top:10px; font-size:12.5px; font-weight:700; color:var(--text); }
+  .box .label{ font-size:11px; font-weight:900; color:var(--muted); margin-bottom:6px; }
+  .box .text{ font-size:12.5px; font-weight:650; }
+  .reason{ margin-top:10px; font-size:12.5px; font-weight:650; color:#0f172a; }
   .labelInline{ color:var(--muted); font-weight:900; }
 
   .footer{
@@ -308,7 +310,7 @@ export default async function handler(req, res) {
     border-top:1px solid var(--line);
     color:var(--muted);
     font-size:11px;
-    font-weight:800;
+    font-weight:700;
     display:flex;
     justify-content:space-between;
     gap:12px;
@@ -316,7 +318,6 @@ export default async function handler(req, res) {
   .small{ font-size:10.5px; }
 </style>
 </head>
-
 <body>
 
 <svg width="0" height="0" style="position:absolute">
@@ -361,7 +362,7 @@ export default async function handler(req, res) {
 
 <div class="section">
   <div class="sectionTitle">أولًا: النص المُدخل</div>
-  <div class="box">${nl2br(text)}</div>
+  <div class="box">${esc(text).replaceAll("\n","<br/>")}</div>
 </div>
 
 <div class="section">
@@ -398,7 +399,9 @@ export default async function handler(req, res) {
 </html>
 `.trim();
 
-    const executablePath = await chromium.executablePath();
+    // Launch chromium for Vercel (مع fallback لو شغّلتي محلي)
+    const executablePath =
+      process.env.VERCEL ? await chromium.executablePath() : (process.env.PUPPETEER_EXECUTABLE_PATH || undefined);
 
     browser = await puppeteer.launch({
       args: chromium.args,
@@ -408,15 +411,16 @@ export default async function handler(req, res) {
     });
 
     const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: ["domcontentloaded", "networkidle0"] });
+    await page.setContent(html, { waitUntil: "load" });
 
-    // ✅ انتظري الخطوط
+    // انتظري الخطوط (حتى لو embedded)
     await page.evaluateHandle("document.fonts.ready");
 
     const pdfBuffer = await page.pdf({
       format: "A4",
       printBackground: true,
       preferCSSPageSize: true,
+      margin: { top: "36px", right: "32px", bottom: "36px", left: "32px" },
     });
 
     const buf = Buffer.isBuffer(pdfBuffer) ? pdfBuffer : Buffer.from(pdfBuffer);
@@ -426,13 +430,11 @@ export default async function handler(req, res) {
     res.setHeader("Content-Disposition", "attachment; filename=hima-report.pdf");
     res.setHeader("Content-Length", String(buf.length));
     res.setHeader("Cache-Control", "no-store");
+
     return res.end(buf);
   } catch (e) {
     console.error(e);
-    return res.status(500).json({
-      error: "PDF generation failed",
-      detail: String(e?.message || e),
-    });
+    return res.status(500).json({ error: "PDF generation failed", detail: String(e?.message || e) });
   } finally {
     if (browser) await browser.close().catch(() => {});
   }
