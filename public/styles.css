@@ -330,3 +330,5 @@ textarea:focus{
   color: #94a3b8;
   margin-top: 4px;
 }
+body{ min-height: 100vh; }
+main{ min-height: 100vh; display:flex; flex-direction:column; }
