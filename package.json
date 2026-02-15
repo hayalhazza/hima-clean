@@ -2,8 +2,12 @@
   "name": "hima-clean",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=18" },
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
+    "arabic-persian-reshaper": "^1.0.1",
+    "bidi-js": "^1.0.3",
     "openai": "^4.0.0",
     "pdfkit": "^0.15.0"
   }
