@@ -406,33 +406,51 @@ export default async function handler(req, res) {
 </html>
 `.trim();
 
-    // Launch chromium for Vercel
+        // Launch chromium for Vercel
     const executablePath = await chromium.executablePath();
 
-    const browser = await puppeteer.launch({
-      args: chromium.args,
-      defaultViewport: chromium.defaultViewport,
-      executablePath,
-      headless: chromium.headless,
-    });
+    let browser;
+    try {
+      browser = await puppeteer.launch({
+        args: chromium.args,
+        defaultViewport: chromium.defaultViewport,
+        executablePath,
+        headless: chromium.headless,
+      });
 
-    const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: "networkidle0" });
+      const page = await browser.newPage();
+      await page.setContent(html, { waitUntil: "networkidle0" });
 
-    const pdf = await page.pdf({
-      format: "A4",
-      printBackground: true,
-      margin: { top: "36px", right: "32px", bottom: "36px", left: "32px" },
-    });
+      // ✅ مهم جداً: انتظر تحميل الخطوط قبل طباعة PDF
+      await page.evaluateHandle("document.fonts.ready");
 
-    await browser.close();
+      const pdfBuffer = await page.pdf({
+        format: "A4",
+        printBackground: true,
+        preferCSSPageSize: true,
+        margin: { top: "36px", right: "32px", bottom: "36px", left: "32px" },
+      });
 
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", "attachment; filename=hima-report.pdf");
-    return res.status(200).send(pdf);
+      const buf = Buffer.isBuffer(pdfBuffer) ? pdfBuffer : Buffer.from(pdfBuffer);
+
+      // ✅ Headers قوية + Content-Length
+      res.statusCode = 200;
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", "attachment; filename=hima-report.pdf");
+      res.setHeader("Content-Length", String(buf.length));
+      res.setHeader("Cache-Control", "no-store");
+
+      // ✅ لا تستخدمي res.send هنا، استخدمي res.end للثبات على Vercel
+      return res.end(buf);
+       } finally {
+      if (browser) await browser.close().catch(() => {});
+    }
 
   } catch (e) {
     console.error(e);
-    return res.status(500).json({ error: "PDF generation failed", detail: String(e?.message || e) });
+    return res.status(500).json({
+      error: "PDF generation failed",
+      detail: String(e?.message || e)
+    });
   }
 }
