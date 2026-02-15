@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import PDFDocument from "pdfkit";
 import path from "path";
+import fs from "fs";
 
 export default async function handler(req, res) {
   try {
@@ -8,14 +9,10 @@ export default async function handler(req, res) {
       return res.status(405).json({ error: "Method Not Allowed" });
     }
 
-    // أحيانًا body يوصل كنص في Vercel
+    // Vercel ممكن يرسل body كنص
     let body = req.body;
     if (typeof body === "string") {
-      try {
-        body = JSON.parse(body);
-      } catch {
-        body = {};
-      }
+      try { body = JSON.parse(body); } catch { body = {}; }
     }
 
     const text = String(body?.text || "").trim();
@@ -33,7 +30,7 @@ export default async function handler(req, res) {
 مهم جدًا: لا تستخدم كلمة "فجوات" إطلاقًا.
 أخرج JSON فقط بهذه البنية:
 {
-  "title":"تقرير حِمى الرسمي",
+  "title":"التقرير الرسمي — حِمى",
   "date":"(تاريخ مختصر)",
   "score":0-100,
   "classification":"مستقر|تعرض متوسط|تعرض مرتفع|تعرض حرج",
@@ -51,11 +48,7 @@ export default async function handler(req, res) {
     });
 
     let report = {};
-    try {
-      report = JSON.parse(analyzeResp.output_text || "{}");
-    } catch {
-      report = {};
-    }
+    try { report = JSON.parse(analyzeResp.output_text || "{}"); } catch { report = {}; }
 
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", "attachment; filename=hima-report.pdf");
@@ -63,102 +56,110 @@ export default async function handler(req, res) {
     const doc = new PDFDocument({ size: "A4", margin: 50 });
     doc.pipe(res);
 
-    // ✅ تحميل خط عربي من public/fonts داخل المشروع (يشتغل محليًا + على Vercel)
+    // تحميل الخط (لو موجود)
     const fontPath = path.join(process.cwd(), "public", "fonts", "NotoNaskhArabic-Regular.ttf");
-    try {
-      doc.registerFont("arabic", fontPath);
-      doc.font("arabic");
-    } catch {
-      // إذا صار أي مشكلة، يكمل بالخط الافتراضي
+    if (fs.existsSync(fontPath)) {
+      doc.font(fontPath);
     }
 
-    const rtl = (t, opts = {}) => doc.text(t || "", { align: "right", ...opts });
+    // RTL helper (مسافات أفضل + عرض ثابت)
+    const rtl = (t, opts = {}) =>
+      doc.text(t || "", {
+        align: "right",
+        width: 480,
+        lineGap: 8,
+        paragraphGap: 6,
+        ...opts,
+      });
 
-    const line = () => {
-      doc.moveDown(0.6);
-      doc.strokeColor("#E5E7EB").lineWidth(1).moveTo(50, doc.y).lineTo(545, doc.y).stroke();
+    const hr = () => {
       doc.moveDown(0.8);
+      doc.strokeColor("#E5E7EB").lineWidth(1).moveTo(50, doc.y).lineTo(545, doc.y).stroke();
       doc.fillColor("#111827");
+      doc.moveDown(1);
     };
 
+    // Header
     doc.fillColor("#111827");
     doc.fontSize(20);
-    rtl(report.title || "تقرير حِمى الرسمي");
+    rtl(report.title || "التقرير الرسمي — حِمى");
 
-    doc.moveDown(0.4);
-    doc.fontSize(11);
+    doc.moveDown(0.3);
+    doc.fontSize(12);
     rtl(`التاريخ: ${report.date || new Date().toLocaleDateString("ar-SA")}`);
     rtl("النوع: تقرير جاهزية تنظيمية");
-    doc.moveDown(0.6);
-
-    doc.fontSize(11);
     rtl(`الدرجة: ${Number(report.score ?? 0)} / 100`);
     rtl(`التصنيف: ${report.classification || "—"}`);
 
-    line();
+    hr();
 
+    // 1) النص المُدخل
+    doc.fontSize(15);
+    rtl("1) النص المُدخل", { underline: true });
+    doc.moveDown(0.4);
     doc.fontSize(13);
-    rtl("أولاً: النص المُدخل", { underline: true });
-    doc.moveDown(0.5);
-    doc.fontSize(11);
     rtl(text);
 
-    line();
+    hr();
 
+    // 2) الملخص التنفيذي
+    doc.fontSize(15);
+    rtl("2) الملخص التنفيذي", { underline: true });
+    doc.moveDown(0.4);
     doc.fontSize(13);
-    rtl("ثانيًا: الملخص التنفيذي", { underline: true });
-    doc.moveDown(0.5);
-    doc.fontSize(11);
-    (report.executive_summary || []).forEach((x) => rtl(`• ${x}`));
+    const exec = Array.isArray(report.executive_summary) ? report.executive_summary : [];
+    if (!exec.length) rtl("—");
+    exec.forEach((x) => rtl(`• ${x}`));
 
-    line();
+    hr();
 
+    // 3) الملاحظات الرئيسية
+    doc.fontSize(15);
+    rtl("3) الملاحظات الرئيسية", { underline: true });
+    doc.moveDown(0.4);
     doc.fontSize(13);
-    rtl("ثالثًا: الملاحظات الرئيسية", { underline: true });
-    doc.moveDown(0.5);
-    doc.fontSize(11);
-    const obs = report.observations || [];
+    const obs = Array.isArray(report.observations) ? report.observations : [];
     if (!obs.length) rtl("—");
     obs.forEach((o) => rtl(`• (${o.area || "عام"}) ${o.text || ""}`));
 
-    line();
+    hr();
 
+    // 4) إعادة الصياغة
+    doc.fontSize(15);
+    rtl("4) اقتراحات إعادة الصياغة (قبل / بعد)", { underline: true });
+    doc.moveDown(0.4);
     doc.fontSize(13);
-    rtl("رابعًا: اقتراحات إعادة الصياغة (قبل / بعد)", { underline: true });
-    doc.moveDown(0.5);
-    doc.fontSize(11);
-    const rs = report.rewrite_suggestions || [];
+    const rs = Array.isArray(report.rewrite_suggestions) ? report.rewrite_suggestions : [];
     if (!rs.length) rtl("—");
     rs.slice(0, 10).forEach((r, i) => {
-      rtl(`${i + 1}) الموضوع: ${r.topic || "—"}`);
-      doc.moveDown(0.2);
+      rtl(`${i + 1}) الموضوع: ${r.topic || "—"}`, { continued: false });
       rtl(`قبل: ${r.before || "—"}`);
-      doc.moveDown(0.2);
       rtl(`بعد: ${r.after || "—"}`);
-      doc.moveDown(0.2);
       rtl(`السبب: ${r.reason || "—"}`);
       doc.moveDown(0.6);
     });
 
-    line();
+    hr();
 
+    // 5) توصيات تنفيذية
+    doc.fontSize(15);
+    rtl("5) توصيات تنفيذية", { underline: true });
+    doc.moveDown(0.4);
     doc.fontSize(13);
-    rtl("خامسًا: توصيات تنفيذية", { underline: true });
-    doc.moveDown(0.5);
-    doc.fontSize(11);
-    const actions = report.recommended_actions || [];
+    const actions = Array.isArray(report.recommended_actions) ? report.recommended_actions : [];
     if (!actions.length) rtl("—");
     actions.forEach((a) => rtl(`• ${a}`));
 
-    line();
+    hr();
 
+    // 6) خاتمة
+    doc.fontSize(15);
+    rtl("6) خاتمة", { underline: true });
+    doc.moveDown(0.4);
     doc.fontSize(13);
-    rtl("سادسًا: خاتمة", { underline: true });
-    doc.moveDown(0.5);
-    doc.fontSize(11);
     rtl(report.closing_note || "—");
 
-    doc.moveDown(1.2);
+    doc.moveDown(1.3);
     doc.fillColor("#6B7280");
     doc.fontSize(9);
     rtl("© حِمى — منصة قياس الجاهزية التنظيمية");
