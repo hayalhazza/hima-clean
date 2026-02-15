@@ -2,10 +2,6 @@ import OpenAI from "openai";
 import chromium from "@sparticuz/chromium";
 import puppeteer from "puppeteer-core";
 
-import OpenAI from "openai";
-import chromium from "@sparticuz/chromium";
-import puppeteer from "puppeteer-core";
-
 /* Helpers */
 function esc(s = "") {
   return String(s)
