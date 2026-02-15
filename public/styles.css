@@ -302,3 +302,31 @@ textarea:focus{
   .resultGrid{ grid-template-columns: 1fr; }
   .heroMeta{ grid-template-columns: 1fr; }
 }
+/* ===== تحسين تنسيق المحاور ===== */
+
+.sideTitle{
+  font-weight: 900;
+  font-size: 18px;
+  margin-bottom: 6px;
+}
+
+.sideSubtitle{
+  font-size: 13px;
+  color: #94a3b8;
+  margin-bottom: 16px;
+  font-weight: 600;
+}
+
+.barLabel{
+  font-weight: 800;
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+}
+
+.barDesc{
+  font-weight: 500;
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 4px;
+}

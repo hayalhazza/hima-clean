@@ -49,14 +49,14 @@
           <div class="statusDot" title="جاهز"></div>
         </div>
 
-        <h1 class="heroTitle">
-          قياس جاهزية نصوص الخصوصية والسياسات
-          <span class="heroTitleAccent">بشكل واضح وعملي</span>
-        </h1>
+       <h1 class="heroTitle">
+قياس الجاهزية التنظيمية وصناعة القرار بثقة
+<span class="heroTitleAccent"></span>
+</h1>
 
-        <p class="heroDesc">
-          أدخلي نصك العربي، ثم احصلي على تقييم رقمي وملاحظات تنفيذية واقتراحات إعادة صياغة—مع إمكانية تنزيل تقرير PDF رسمي.
-        </p>
+<p class="heroSubtitle">
+تحليل عميق للنصوص والسياسات مع محاكاة أثر القرار وتحويل النتائج إلى توصيات تنفيذية واضحة.
+</p>
 
         <div class="heroMeta">
           <div class="metaItem">
@@ -74,19 +74,19 @@
     <section id="analyze" class="panel">
       <div class="panelHead">
         <div>
-          <h2 class="panelTitle">أدخلي النص للتحليل</h2>
+          <h2 class="panelTitle">أدخل النص للتحليل</h2>
           <p class="panelSub">يفضل لصق النص كاملًا كما هو.</p>
         </div>
         <div class="actions">
+            <button id="btnAnalyze" class="btn primary" type="button">تحليل</button>
           <button id="btnMock" class="btn ghost" type="button">محاكاة</button>
-          <button id="btnAnalyze" class="btn primary" type="button">تحليل</button>
         </div>
       </div>
 
       <div class="inputCard">
-        <textarea id="txt" placeholder="الصقي النص هنا..."></textarea>
+        <textarea id="txt" placeholder="الصق النص هنا..."></textarea>
         <div class="hint">
-          <span>تلميح: ابدئي بـ 2–3 فقرات للحصول على نتيجة أسرع.</span>
+          <span>تلميح: ابدآ بـ 2–3 فقرات للحصول على نتيجة أسرع.</span>
           <span id="charCount">0</span>
         </div>
       </div>
@@ -132,24 +132,40 @@
 
           <div class="divider"></div>
 
-          <div class="sideTitle">المحاور</div>
-          <div class="bars">
-            <div class="barRow">
-              <div class="barLabel">الإحاطة الواجبة</div>
-              <div class="barTrack"><div class="barFill" id="b1"></div></div>
-              <div class="barVal" id="b1v">—</div>
-            </div>
-            <div class="barRow">
-              <div class="barLabel">الموافقة والعدول</div>
-              <div class="barTrack"><div class="barFill" id="b2"></div></div>
-              <div class="barVal" id="b2v">—</div>
-            </div>
-            <div class="barRow">
-              <div class="barLabel">الاحتفاظ والإتلاف</div>
-              <div class="barTrack"><div class="barFill" id="b3"></div></div>
-              <div class="barVal" id="b3v">—</div>
-            </div>
-          </div>
+        <div class="sideTitle">محاور الجاهزية التنظيمية</div>
+<div class="sideSubtitle">
+تقييم هيكلي لعناصر الامتثال الأساسية في السياسة محل التحليل
+</div>
+         <div class="bars">
+
+  <div class="barRow">
+    <div class="barLabel">
+      الإحاطة الواجبة
+      <span class="barDesc">وضوح الإفصاح والشفافية التنظيمية</span>
+    </div>
+    <div class="barTrack"><div class="barFill" id="b1"></div></div>
+    <div class="barVal" id="b1v">—</div>
+  </div>
+
+  <div class="barRow">
+    <div class="barLabel">
+      الموافقة والعدول
+      <span class="barDesc">آليات الموافقة وحق التراجع</span>
+    </div>
+    <div class="barTrack"><div class="barFill" id="b2"></div></div>
+    <div class="barVal" id="b2v">—</div>
+  </div>
+
+  <div class="barRow">
+    <div class="barLabel">
+      الاحتفاظ والإتلاف
+      <span class="barDesc">دورة حياة البيانات ومعايير الاحتفاظ</span>
+    </div>
+    <div class="barTrack"><div class="barFill" id="b3"></div></div>
+    <div class="barVal" id="b3v">—</div>
+  </div>
+
+</div>
 
           <div class="note">
             إذا رغبتِ، نقدر نضيف “شعار الدرع” داخل تقرير PDF أيضًا لاحقًا.
