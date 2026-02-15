@@ -178,6 +178,25 @@ export default async function handler(req, res) {
     --green:#16a34a;
   }
   *{ box-sizing:border-box; }
+  @font-face {
+  font-family: "IBM Plex Arabic Embedded";
+  src: url("file://${process.cwd()}/public/fonts/IBMPlexSansArabic-Regular.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+
+body{
+    margin:0;
+    padding:38px 44px;
+    font-family: "IBM Plex Arabic Embedded", system-ui, -apple-system, sans-serif;
+    color:var(--text);
+    direction:rtl;
+    text-align:right;
+    line-height:2.05;
+    background:white;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
   body{
     margin:0;
     padding:38px 44px;
