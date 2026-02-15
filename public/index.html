@@ -3,27 +3,78 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>حِمى — منصة قياس الجاهزية التنظيمية</title>
+  <title>حِمى درع — منصة قياس الجاهزية التنظيمية</title>
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
+  <div class="bg"></div>
+
   <main class="wrap">
-    <h1>حِمى</h1>
-    <div class="muted">منصة قياس الجاهزية التنظيمية — تجربة تفاعلية</div>
-    <small class="muted">الصق نصك ثم اضغط "تحليل" أو "تحميل PDF".</small>
+    <header class="hero">
+      <div class="brand">
+        <div class="logo">🛡️</div>
+        <div>
+          <h1>حِمى <span class="accent">درع</span></h1>
+          <p class="muted">تحليل جاهزية النصوص التنظيمية — مع وضع محاكاة للتجربة السريعة.</p>
+        </div>
+      </div>
 
-    <textarea id="text" rows="10" placeholder="الصق النص هنا..."></textarea>
+      <div class="toggles">
+        <label class="toggle">
+          <input id="useMock" type="checkbox" checked />
+          <span>المحاكاة (Mock)</span>
+        </label>
 
-    <div class="row">
-      <button id="btnAnalyze">تحليل</button>
-      <button id="btnPdf" class="secondary">تحميل PDF</button>
-    </div>
+        <span id="status" class="status">جاهز</span>
+      </div>
+    </header>
 
-    <pre id="out" class="card"></pre>
+    <section class="card">
+      <label class="label">الصقي النص هنا</label>
+      <textarea id="text" rows="10" placeholder="مثال: سياسة الخصوصية..."></textarea>
 
-    <footer class="footer muted">© حِمى — منصة قياس الجاهزية التنظيمية</footer>
+      <div class="actions">
+        <button id="btnAnalyze" class="btn primary">تحليل</button>
+        <button id="btnPdf" class="btn ghost">تحميل PDF</button>
+        <button id="btnClear" class="btn danger ghost">مسح</button>
+      </div>
+
+      <div class="grid">
+        <div class="mini">
+          <div class="k">الدرجة</div>
+          <div id="score" class="v">—</div>
+        </div>
+        <div class="mini">
+          <div class="k">التصنيف</div>
+          <div id="classif" class="v">—</div>
+        </div>
+        <div class="mini">
+          <div class="k">عالي</div>
+          <div id="gHigh" class="v">—</div>
+        </div>
+        <div class="mini">
+          <div class="k">متوسط</div>
+          <div id="gMid" class="v">—</div>
+        </div>
+        <div class="mini">
+          <div class="k">منخفض</div>
+          <div id="gLow" class="v">—</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="rowHead">
+        <h2>النتيجة التفصيلية</h2>
+        <small class="muted">إذا كانت المحاكاة مطفّية، سيتم استخدام API الحقيقي.</small>
+      </div>
+
+      <pre id="out" class="out">—</pre>
+    </section>
+
+    <footer class="footer muted">© حِمى درع — منصة قياس الجاهزية التنظيمية</footer>
   </main>
 
-  <script src="./app.js"></script>
+  <script type="module" src="./app.js"></script>
 </body>
 </html>
